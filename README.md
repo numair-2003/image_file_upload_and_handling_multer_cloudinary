@@ -1,11 +1,31 @@
 # MERN User Management App
-### Internship Week 1 Project
+### Internship Week 1 Project — DawoodTech NextGen
 
 A full-stack CRUD application built with **MongoDB · Express.js · React · Node.js**
 
 
+## Live Demo
+
+| | URL |
+|---|---|
+| **Frontend** | https://user-management-system-ten-phi.vercel.app |
+| **Backend API** | https://usermanagementsystem-production-c417.up.railway.app |
+
+> **Note:** The backend is hosted on Railway's free tier and may take 10–15 seconds to wake up after a period of inactivity. Simply refresh if the page doesn't load immediately.
+
+
+## Deployment Stack
+
+| Service | Platform | Purpose |
+|---------|----------|---------|
+| Frontend | [Vercel](https://vercel.com) | Hosts the React app |
+| Backend | [Railway](https://railway.app) | Runs the Node/Express server |
+| Database | [MongoDB Atlas](https://www.mongodb.com/atlas) | Cloud-hosted MongoDB |
+
+
 ## Project Structure
 
+```
 project-root/
 ├── backend/
 │   ├── controllers/
@@ -37,11 +57,12 @@ project-root/
 │
 ├── MERN_API_Tests.postman_collection.json
 └── README.md
+```
 
 
 ## Prerequisites
 
-Make sure the following are installed:
+Make sure the following are installed for local development:
 
 | Tool | Version | Download |
 |------|---------|----------|
@@ -52,17 +73,13 @@ Make sure the following are installed:
 | Postman | Latest | https://www.postman.com/downloads |
 
 
-## Setup and Running
+## Local Setup & Running
 
-### 1. Start MongoDB
+### 1. Clone the Repository
 
-Make sure your local MongoDB server is running:
 ```bash
-# macOS/Linux
-mongod
-
-# Windows (if installed as a service, it may already be running)
-# Open MongoDB Compass and connect to: mongodb://localhost:27017
+git clone https://github.com/numair-2003/user_management_system.git
+cd user_management_system
 ```
 
 ### 2. Backend Setup
@@ -70,14 +87,28 @@ mongod
 ```bash
 cd backend
 npm install
-npm run dev         # uses nodemon for auto-reload
+```
+
+Create a `.env` file inside the `backend` folder:
+
+```
+PORT = 5000
+MONGO_URI = mongodb://localhost:27017/mern_users
+```
+
+Then run:
+
+```bash
+npm run dev       # uses nodemon for auto-reload
 # OR
-npm start           # plain node
+npm start         # plain node
 ```
 
 You should see:
-   1. Connected to MongoDB
-   2. Server running at http://localhost:5000
+
+  1. Connected to MongoDB
+  2. Server running at http://localhost:5000
+  
 
 ### 3. Frontend Setup
 
@@ -132,11 +163,10 @@ React app opens at: **http://localhost:3000**
 { "success": true, "message": "User deleted successfully!", "data": { ... } }
 ```
 
-
 ## Postman API Testing
 
 1. Open **Postman**
-2. Click **Import** → upload `MERN_API_Tests.postman_collection.json`
+2. Click **Import** -> upload `MERN_API_Tests.postman_collection.json`
 3. The collection includes 6 pre-built requests:
    - Health Check (GET /)
    - GET All Users
@@ -158,16 +188,34 @@ React app opens at: **http://localhost:3000**
 - **Responsive Design** — Works on mobile and desktop
 
 
-## GitHub Upload
+## Deployment Guide
 
-- /backend folder with all files
-- /frontend folder with all files
-- .gitignore (exclude node_modules and .env)
-- README.md
-- Postman collection
+### Frontend -> Vercel
+1. Push code to GitHub
+2. Go to [vercel.com](https://vercel.com) -> Import GitHub repo
+3. Set Root Directory to `frontend`
+4. Add environment variable: `REACT_APP_API_URL` = your Railway backend URL
+5. Deploy
+
+### Backend -> Railway
+1. Go to [railway.app](https://railway.app) -> New Project -> GitHub Repository
+2. Select your repo and set Root Directory to `backend`
+3. Add environment variable: `MONGO_URI` = your MongoDB Atlas connection string
+4. Generate a public domain in Settings -> Networking
+5. Deploy
+
+### Database -> MongoDB Atlas
+1. Go to [mongodb.com/atlas](https://www.mongodb.com/cloud/atlas) -> Create free cluster
+2. Create a database user and allow all IP addresses (0.0.0.0/0)
+3. Get your connection string and use it as `MONGO_URI`
 
 
-**Create a `.gitignore`:**
+## GitHub Repository
 
-- node_modules/
-- .env
+- `/backend` — Node.js + Express server
+- `/frontend` — React application
+- `.gitignore` — Excludes node_modules and .env
+- `README.md` — Project documentation
+- `MERN_API_Tests.postman_collection.json` — API test collection
+
+*Built by **Numair Fahad** — MERN Stack Intern at DawoodTech NextGen*
