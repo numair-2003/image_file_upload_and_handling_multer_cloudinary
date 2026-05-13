@@ -9,7 +9,12 @@ const multer = require('multer');
 dotenv.config();
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: process.env.FRONTEND_URL || "*", 
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  credentials: true
+}));
+
 app.use(express.json());
 
 cloudinary.config({
@@ -60,9 +65,17 @@ app.get('/api/images', async (req, res) => {
   }
 });
 
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("Connected to MongoDB"))
-  .catch((err) => console.log("DB Connection Error: ", err));
+const connectDB = async () => {
+  if (mongoose.connection.readyState >= 1) return;
+  try {
+    await mongoose.connect(process.env.MONGO_URI);
+    console.log("Connected to MongoDB");
+  } catch (err) {
+    console.log("DB Connection Error: ", err);
+  }
+};
+
+connectDB();
 
 if (process.env.NODE_ENV !== 'production') {
   const PORT = process.env.PORT || 5000;
