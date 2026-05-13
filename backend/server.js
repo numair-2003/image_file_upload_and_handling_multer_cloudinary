@@ -6,7 +6,6 @@ const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const multer = require('multer');
 require('dotenv').config();
 
-// Route Imports
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const adminRoutes = require('./routes/adminRoutes');
