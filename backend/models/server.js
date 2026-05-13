@@ -1,43 +1,66 @@
-// server.js - Main entry point
-
 const express = require('express');
 const mongoose = require('mongoose');
+const dotenv = require('dotenv');
 const cors = require('cors');
-require('dotenv').config();
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const multer = require('multer');
 
-const authRoutes  = require('./routes/authRoutes');
-const userRoutes  = require('./routes/userRoutes');
-const adminRoutes = require('./routes/adminRoutes');
-
+dotenv.config();
 const app = express();
 
-// ── Middleware ──────────────────────────────────────────────────────────────
 app.use(cors());
 app.use(express.json());
 
-// ── Routes ──────────────────────────────────────────────────────────────────
-app.use('/api/auth',  authRoutes);   // signup, login
-app.use('/api/user',  userRoutes);   // protected user routes
-app.use('/api/admin', adminRoutes);  // admin-only routes
-
-// Health check
-app.get('/', (req, res) => {
-  res.json({ message: 'MERN Auth API is running 🚀' });
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-// ── MongoDB + Server ─────────────────────────────────────────────────────────
-const PORT     = process.env.PORT     || 5000;
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/mern_auth';
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'mern_gallery', 
+    allowed_formats: ['jpg', 'png', 'jpeg'],
+  },
+});
+const upload = multer({ storage: storage });
 
-mongoose
-  .connect(MONGO_URI)
+const imageSchema = new mongoose.Schema({
+  url: String,
+  public_id: String,
+  createdAt: { type: Date, default: Date.now }
+});
+const Image = mongoose.model('Image', imageSchema);
+
+app.post('/api/upload', upload.single('image'), async (req, res) => {
+  try {
+    const newImage = new Image({
+      url: req.file.path,
+      public_id: req.file.filename
+    });
+    await newImage.save();
+    res.status(201).json(newImage);
+  } catch (error) {
+    res.status(500).json({ message: "Image file upload failed", error });
+  }
+});
+
+app.get('/api/images', async (req, res) => {
+  try {
+    const images = await Image.find().sort({ createdAt: -1 });
+    res.json(images);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching images!", error });
+  }
+});
+
+const PORT = process.env.PORT || 5000;
+
+mongoose.connect(process.env.MONGO_URI)
   .then(() => {
-    console.log('✅  Connected to MongoDB');
-    app.listen(PORT, () =>
-      console.log(`🚀  Server running at http://localhost:${PORT}`)
-    );
+    console.log("Connected to MongoDB");
+    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
   })
-  .catch((err) => {
-    console.error('❌  MongoDB connection error:', err.message);
-    process.exit(1);
-  });
+  .catch((err) => console.log("DB Connection Error: ", err));

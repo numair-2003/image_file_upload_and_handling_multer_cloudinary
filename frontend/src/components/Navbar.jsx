@@ -1,5 +1,3 @@
-// components/Navbar.jsx
-
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -25,6 +23,9 @@ const Navbar = () => {
           <>
             <span className="nav-role">{user.role}</span>
             <Link to="/dashboard" className="nav-link">Dashboard</Link>
+            
+            <Link to="/upload" className="nav-link">Upload Image</Link>
+
             {user.role === 'admin' && (
               <Link to="/admin" className="nav-link nav-admin">Admin</Link>
             )}
