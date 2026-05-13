@@ -1,4 +1,3 @@
-// pages/Signup.jsx 
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { signupAPI } from '../services/api';
@@ -26,42 +25,23 @@ const Signup = () => {
 
     setLoading(true);
     
-    console.log('=== SIGNUP DEBUG ===');
-    console.log('1. Form data:', form);
-    console.log('2. API URL:', process.env.REACT_APP_API_URL || 'http://localhost:5000');
-    console.log('===================');
+    console.log('--- SIGNUP INITIATED ---');
+    console.log('Target API:', import.meta.env.VITE_API_URL || 'http://localhost:5000/api');
 
     try {
-      console.log('3. Calling signupAPI...');
       const res = await signupAPI(form);
       
-      console.log('4. Response received:', res);
-      console.log('5. Response data:', res.data);
-      console.log('6. Token:', res.data?.token);
-      console.log('7. User data:', res.data?.data);
-
       if (res.data?.token && res.data?.data) {
-        console.log('8. Calling login...');
         login(res.data.token, res.data.data);
-        console.log('9. Navigating to dashboard...');
-        navigate('/dashboard');
+        navigate('/'); 
       } else {
-        console.error('Missing token or data in response');
-        setError('Invalid response from server');
+        alert("Registration Successful! Please login.");
+        navigate('/login');
       }
       
     } catch (err) {
-      console.error('=== ERROR DEBUG ===');
-      console.error('Error object:', err);
-      console.error('Error name:', err.name);
-      console.error('Error message:', err.message);
-      console.error('Error response:', err.response);
-      console.error('Error response data:', err.response?.data);
-      console.error('Error response status:', err.response?.status);
-      console.error('Error request:', err.request);
-      console.error('===================');
-
-      setError(err.response?.data?.message || err.message || 'Signup failed');
+      console.error('Signup Error:', err.response?.data || err.message);
+      setError(err.response?.data?.message || 'Signup failed! Please try again.');
     } finally {
       setLoading(false);
     }
@@ -71,9 +51,9 @@ const Signup = () => {
     <div className="auth-page">
       <div className="auth-card">
         <div className="auth-header">
-          <span className="auth-tag">// SIGNUP</span>
-          <h1 className="auth-title">Create account</h1>
-          <p className="auth-sub">Join as a regular user</p>
+          <span className="auth-tag">SIGNUP</span>
+          <h1 className="auth-title">Create account!</h1>
+          <p className="auth-sub">Join the community gallery!</p>
         </div>
 
         <form onSubmit={handleSubmit} className="auth-form">
@@ -82,7 +62,7 @@ const Signup = () => {
             <input
               type="text"
               name="name"
-              placeholder="John Doe"
+              placeholder="Numair Fahad"
               value={form.name}
               onChange={handleChange}
               required
@@ -116,7 +96,7 @@ const Signup = () => {
           {error && <p className="auth-error">⚠ {error}</p>}
 
           <button type="submit" className="btn-primary" disabled={loading}>
-            {loading ? 'CREATING...' : 'CREATE ACCOUNT'}
+            {loading ? <div className="spinner"></div> : 'CREATE ACCOUNT'}
           </button>
         </form>
 

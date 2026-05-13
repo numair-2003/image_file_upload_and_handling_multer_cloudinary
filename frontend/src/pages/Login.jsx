@@ -1,5 +1,3 @@
-// pages/Login.jsx
-
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { loginAPI } from '../services/api';
@@ -7,11 +5,11 @@ import { useAuth } from '../context/AuthContext';
 import './Auth.css';
 
 const Login = () => {
-  const [form, setForm]     = useState({ email: '', password: '' });
-  const [error, setError]   = useState('');
+  const [form, setForm] = useState({ email: '', password: '' });
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login }           = useAuth();
-  const navigate            = useNavigate();
+  const { login } = useAuth();
+  const navigate = useNavigate();
 
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -25,7 +23,7 @@ const Login = () => {
       login(res.data.token, res.data.data);
       navigate(res.data.data.role === 'admin' ? '/admin' : '/dashboard');
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed');
+      setError(err.response?.data?.message || 'Login failed!');
     } finally {
       setLoading(false);
     }
@@ -35,9 +33,9 @@ const Login = () => {
     <div className="auth-page">
       <div className="auth-card">
         <div className="auth-header">
-          <span className="auth-tag">// LOGIN</span>
-          <h1 className="auth-title">Welcome back</h1>
-          <p className="auth-sub">Enter your credentials to continue</p>
+          <span className="auth-tag">LOGIN</span>
+          <h1 className="auth-title">Welcome back!</h1>
+          <p className="auth-sub">Enter your credentials to continue!</p>
         </div>
 
         <form onSubmit={handleSubmit} className="auth-form">
@@ -74,7 +72,7 @@ const Login = () => {
 
         <p className="auth-footer">
           Don't have an account?{' '}
-          <Link to="/signup">Sign up</Link>
+          <Link to="/signup">Sign Up</Link>
         </p>
       </div>
     </div>
