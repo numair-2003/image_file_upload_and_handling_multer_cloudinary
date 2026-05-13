@@ -12,8 +12,11 @@ const app = express();
 app.use(cors({
   origin: true, 
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  credentials: true
+  credentials: true,
+  allowedHeaders: ["Content-Type", "Authorization"]
 }));
+
+app.options('*', cors());
 
 app.use(express.json());
 
@@ -28,20 +31,27 @@ const storage = new CloudinaryStorage({
   params: {
     folder: 'mern_gallery', 
     allowed_formats: ['jpg', 'png', 'jpeg', 'webp'],
+    transformation: [{ width: 1000, crop: "limit" }] 
   },
 });
 const upload = multer({ storage: storage });
 
-const Image = mongoose.models.Image || mongoose.model('Image', new mongoose.Schema({
+const imageSchema = new mongoose.Schema({
   url: String,
   public_id: String,
   createdAt: { type: Date, default: Date.now }
-}));
+});
+
+const Image = mongoose.models.Image || mongoose.model('Image', imageSchema);
+
+let isConnected = false;
 
 const connectDB = async () => {
-  if (mongoose.connection.readyState >= 1) return;
+  if (isConnected) return;
+  
   try {
-    await mongoose.connect(process.env.MONGO_URI);
+    const db = await mongoose.connect(process.env.MONGO_URI);
+    isConnected = db.connections[0].readyState;
     console.log("✅ Connected to MongoDB");
   } catch (err) {
     console.error("❌ DB Connection Error: ", err.message);
@@ -64,7 +74,7 @@ app.get('/', (req, res) => {
 app.post('/api/upload', upload.single('image'), async (req, res) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ message: "No file uploaded" });
+      return res.status(400).json({ message: "No file uploaded. Ensure field name is 'image'" });
     }
 
     const newImage = new Image({

@@ -49,7 +49,7 @@ const Navbar = () => {
   );
 };
 
-const GalleryView = ({ images, loading, uploading, onFileChange, handleUpload }) => {
+const GalleryView = ({ images, loading, uploading, onFileChange, handleUpload, fileInputRef }) => {
   const { user } = useAuth();
 
   return (
@@ -73,6 +73,7 @@ const GalleryView = ({ images, loading, uploading, onFileChange, handleUpload })
             <form onSubmit={handleUpload}>
               <input 
                 type="file" 
+                ref={fileInputRef}
                 onChange={onFileChange} 
                 accept="image/*" 
                 id="file-input" 
@@ -123,6 +124,7 @@ function App() {
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [loadingImages, setLoadingImages] = useState(true);
+  const fileInputRef = React.useRef(null);
   const { user, loading: authLoading } = useAuth();
 
   const loadImages = async () => {
@@ -160,16 +162,24 @@ function App() {
   const handleUpload = async (e) => {
     e.preventDefault();
     if (!file) return alert("Please select an image file!");
+
     const formData = new FormData();
     formData.append('image', file);
+
     try {
       setUploading(true);
-      await uploadImageAPI(formData);
-      setFile(null);
-      loadImages(); 
-      alert("Media successfully pushed to Cloudinary!");
+      const response = await uploadImageAPI(formData);
+      
+      if (response.status === 201 || response.status === 200) {
+        setFile(null);
+        if (fileInputRef.current) fileInputRef.current.value = ""; 
+        await loadImages(); 
+        alert("Media successfully pushed to Cloudinary!");
+      }
     } catch (error) {
-      alert(error.response?.data?.message || "Upload rejected. Check login status!");
+      console.error("Upload Error:", error);
+      const errorMsg = error.response?.data?.message || "Upload rejected. Check server logs!";
+      alert(`Error: ${errorMsg}`);
     } finally {
       setUploading(false);
     }
@@ -187,27 +197,28 @@ function App() {
               uploading={uploading} 
               onFileChange={(e) => setFile(e.target.files[0])} 
               handleUpload={handleUpload} 
+              fileInputRef={fileInputRef}
             />
           } />
           <Route path="/login" element={user ? <Navigate to="/" /> : <Login />} />
           <Route path="/signup" element={user ? <Navigate to="/" /> : <Signup />} />
           <Route path="/admin" element={
             user?.role === 'admin' ? (
-              <div className="container">
+              <div className="container" style={{padding: '2rem'}}>
                 <header className="app-header">
                   <h1>Admin <span className="logo-bracket">Panel</span></h1>
                 </header>
                 <div className="upload-card">
-                  <p>Welcome to the User Management Dashboard!</p>
+                  <p>Welcome, {user.name}! Admin management tools are ready.</p>
                 </div>
               </div>
             ) : (
-              <div className="container">
-                <div className="banner-error">
-                  <ShieldAlert size={20} />
-                  <span>Access Denied. Admin privileges required!</span>
+              <div className="container" style={{padding: '2rem', textAlign: 'center'}}>
+                <div className="banner-error" style={{marginBottom: '1rem', color: '#ff4d4d', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px'}}>
+                  <ShieldAlert size={30} />
+                  <span style={{fontWeight: 'bold'}}>Access Denied. Admin privileges required!</span>
                 </div>
-                <Link to="/">Return to Gallery</Link>
+                <Link to="/" className="pill" style={{textDecoration: 'none', display: 'inline-block'}}>Return to Gallery</Link>
               </div>
             )
           } />
