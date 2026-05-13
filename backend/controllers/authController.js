@@ -2,6 +2,11 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
 const generateToken = (id) => {
+  if (!process.env.JWT_SECRET) {
+    console.error("ERROR: JWT_SECRET is not defined in environment variables!");
+    throw new Error("Internal Server Configuration Error");
+  }
+
   return jwt.sign({ id }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN || '7d',
   });
@@ -47,10 +52,11 @@ const signup = async (req, res) => {
       },
     });
   } catch (error) {
+    console.error("Signup Error:", error.message);
     res.status(500).json({
       success: false,
       message: 'Server error during signup!',
-      error: error.message,
+      error: error.message, 
     });
   }
 };
@@ -89,6 +95,7 @@ const login = async (req, res) => {
       },
     });
   } catch (error) {
+    console.error("Login Error:", error.message);
     res.status(500).json({
       success: false,
       message: 'Server error during login!',

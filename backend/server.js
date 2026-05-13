@@ -13,9 +13,15 @@ const adminRoutes = require('./routes/adminRoutes');
 const app = express();
 
 app.use(cors({
-  origin: process.env.FRONTEND_URL || "*",
-  credentials: true
+  origin: [
+    process.env.FRONTEND_URL, 
+    "https://image-file-upload-and-handling-mult.vercel.app"
+  ],
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
 }));
+
 app.use(express.json());
 
 cloudinary.config({
@@ -28,28 +34,28 @@ const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
     folder: 'mern_gallery', 
-    allowed_formats: ['jpg', 'png', 'jpeg'],
+    allowed_formats: ['jpg', 'png', 'jpeg', 'webp'],
   },
 });
 const upload = multer({ storage: storage });
 
-const imageSchema = new mongoose.Schema({
+const Image = mongoose.models.Image || mongoose.model('Image', new mongoose.Schema({
   url: String,
   public_id: String,
   createdAt: { type: Date, default: Date.now }
-});
-const Image = mongoose.model('Image', imageSchema);
+}));
 
 const connectDB = async () => {
   if (mongoose.connection.readyState >= 1) return;
+  
   try {
-    if (!process.env.MONGO_URI) {
-      throw new Error("MONGO_URI is missing from environment variables");
-    }
-    await mongoose.connect(process.env.MONGO_URI);
-    console.log('✅ Connected to MongoDB');
+    const conn = await mongoose.connect(process.env.MONGO_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+    console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
   } catch (err) {
-    console.error('❌ DB Error:', err.message);
+    console.error('❌ MongoDB Connection Error:', err.message);
   }
 };
 
@@ -67,12 +73,14 @@ app.get('/api/images', async (req, res) => {
     const images = await Image.find().sort({ createdAt: -1 });
     res.json(images);
   } catch (error) {
-    res.status(500).json({ message: "Error fetching images!", error });
+    res.status(500).json({ message: "Error fetching images!", error: error.message });
   }
 });
 
 app.post('/api/upload', upload.single('image'), async (req, res) => {
   try {
+    if (!req.file) return res.status(400).json({ message: "No file uploaded" });
+
     const newImage = new Image({
       url: req.file.path,
       public_id: req.file.filename
@@ -80,15 +88,21 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
     await newImage.save();
     res.status(201).json(newImage);
   } catch (error) {
-    res.status(500).json({ message: "Image file upload failed", error });
+    res.status(500).json({ message: "Image upload failed", error: error.message });
   }
 });
 
-app.get('/', (req, res) => res.json({ message: "Server is running perfectly on Vercel! 🚀" }));
+app.get('/', (req, res) => {
+  res.status(200).json({ 
+    status: "Active",
+    message: "Server is running perfectly on Vercel! 🚀",
+    database: mongoose.connection.readyState === 1 ? "Connected" : "Disconnected"
+  });
+});
 
 if (process.env.NODE_ENV !== 'production') {
   const PORT = process.env.PORT || 5000;
-  app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+  app.listen(PORT, () => console.log(`🚀 Local Server: http://localhost:${PORT}`));
 }
 
 module.exports = app;
