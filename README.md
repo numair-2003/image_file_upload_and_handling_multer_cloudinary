@@ -1,190 +1,95 @@
-# MERN Auth — JWT + Role-Based Access Control
-### Internship Week 2 Project — DawoodTech NextGen
+# CloudGallery — MERN Media Library & Authentication
 
-A full-stack authentication system built with **MongoDB · Express.js · React · Node.js**
+> **Internship Week 3 Project — Cloud Media Management**
+
+> A high-performance MERN application featuring JWT Authentication, Role-Based Access Control (RBAC), and Cloudinary-integrated image management.
+
 
 ## Live Demo
 
-| | URL |
-|---|---|
-| **Frontend** | https://authorization-and-authentication-us.vercel.app |
-| **Backend API** | https://authorizationandauthenticationusermanagement-production.up.railway.app/ |
-
-> **Note:** The backend is hosted on Railway's free tier and may take 10–15 seconds to wake up after a period of inactivity. Simply refresh if the page doesn't load immediately.
+| Component | Platform | URL |
+|-----------|----------|-----|
+| Frontend | Vercel | [image-file-upload-and-handling-mult.vercel.app](https://image-file-upload-and-handling-mult.vercel.app) |
+| Backend API | Vercel | [image-file-upload-and-handling-mult-seven.vercel.app](https://image-file-upload-and-handling-mult-seven.vercel.app) |
 
 
-## Deployment Stack
+## Tech Stack
 
-| Service | Platform | Purpose |
-|---------|----------|---------|
-| Frontend | [Vercel](https://vercel.com) | Hosts the React app |
-| Backend | [Railway](https://railway.app) | Runs the Node/Express server |
-| Database | [MongoDB Atlas](https://www.mongodb.com/atlas) | Cloud-hosted MongoDB -> stores data |
-
-
-## Authentication Flow
-
-```
-User Signup
-    │
-    ▼
-POST /api/auth/signup
-    │  -> Validate input
-    │  -> Hash password with bcrypt
-    │  -> Save user to MongoDB
-    │  -> Generate JWT token
-    ▼
-Return token + user data
-    │
-    ▼
-Frontend stores token in localStorage
-    │
-    ▼
-Every API request sends: Authorization: Bearer <token>
-    │
-    ▼
-authMiddleware verifies token
-    │
-    ├─ Valid token → attach user to req.user -> next()
-    └─ Invalid token -> 401 Unauthorized
-```
+| Layer | Technology |
+|-------|-----------|
+| **Frontend** | React.js, Axios, Tailwind CSS, Context API |
+| **Backend** | Node.js, Express.js, Multer |
+| **Database** | MongoDB Atlas (Cloud) |
+| **Media Storage** | Cloudinary (v2 API) |
+| **Deployment** | Vercel (Serverless Functions) |
 
 
-## Roles
+## Project Architecture & Flow
 
-| Role | Access |
-|------|--------|
-| **user** | View profile, update profile, user dashboard |
-| **admin** | All user access + admin panel, manage all users, change roles, delete users |
+### Image Upload Flow
 
-> New signups are always assigned the `user` role by default. Admin role must be set manually in MongoDB Compass or via the Admin Panel by an existing admin.
+1. **Client** — User selects a file and sends a `POST` request with `multipart/form-data`.
+2. **Middleware** — Multer processes the file and `multer-storage-cloudinary` uploads it directly to the cloud.
+3. **Database** — MongoDB stores the returned Cloudinary URL and `public_id`.
+4. **Security** — Only authenticated users with a valid JWT can access the `/api/upload` endpoint.
 
+### Authentication Flow
 
-## Project Structure
-
-```
-project-root/
-├── backend/
-│   ├── controllers/
-│   │   ├── authController.js      -> signup, login, getMe
-│   │   ├── userController.js      -> getProfile, updateProfile
-│   │   └── adminController.js     -> getAllUsers, deleteUser, updateRole
-│   ├── middleware/
-│   │   └── authMiddleware.js      -> protect (JWT verify) + authorize (role check)
-│   ├── models/
-│   │   └── User.js                -> name, email, password (hashed), role
-│   ├── routes/
-│   │   ├── authRoutes.js          -> /api/auth/*
-│   │   ├── userRoutes.js          -> /api/user/*
-│   │   └── adminRoutes.js         -> /api/admin/*
-│   ├── .env                       -> Environment variables
-│   ├── package.json
-│   └── server.js                  -> Entry point
-│
-├── frontend/
-│   ├── public/
-│   │   └── index.html
-│   ├── src/
-│   │   ├── context/
-│   │   │   └── AuthContext.jsx    -> Global auth state (login, logout, user)
-│   │   ├── components/
-│   │   │   ├── Navbar.jsx         -> Role-aware navigation bar
-│   │   │   ├── Navbar.css
-│   │   │   └── ProtectedRoute.jsx -> Redirects unauthenticated users
-│   │   ├── pages/
-│   │   │   ├── Home.jsx           -> Landing page
-│   │   │   ├── Home.css
-│   │   │   ├── Login.jsx          -> Login form
-│   │   │   ├── Signup.jsx         -> Signup form
-│   │   │   ├── Auth.css           -> Shared login/signup styles
-│   │   │   ├── Dashboard.jsx      -> User dashboard
-│   │   │   ├── Dashboard.css
-│   │   │   ├── AdminDashboard.jsx -> Admin panel (manage all users)
-│   │   │   ├── AdminDashboard.css
-│   │   │   ├── Profile.jsx        -> Update profile page
-│   │   │   └── Profile.css
-│   │   ├── services/
-│   │   │   └── api.js             -> Axios with JWT interceptor
-│   │   ├── App.jsx                -> Route definitions
-│   │   ├── index.js               -> React entry point
-│   │   └── index.css              -> Global styles + CSS variables
-│   └── package.json
-│
-├── MERN_API_Tests.postman_collection.json
-└── README.md
-```
+- **Signup** — Validates input, hashes passwords with `bcrypt`, and generates a 7-day JWT.
+- **Interceptors** — Axios interceptors automatically attach the `Authorization: Bearer <token>` header to all protected requests.
 
 
-## API Endpoints
+## Testing & Verification Guide
 
-### Auth Routes (`/api/auth`)
+### 1. Functional Testing (The "Happy Path")
 
-| Method | Endpoint | Access | Description |
-|--------|----------|--------|-------------|
-| POST | `/api/auth/signup` | Public | Register new user |
-| POST | `/api/auth/login` | Public | Login and get JWT token |
-| GET | `/api/auth/me` | Protected | Get current logged in user |
+| Feature | Action | Expected Result |
+|---------|--------|-----------------|
+| Signup | Register at `/signup` | User appears in MongoDB `users` collection. |
+| Login | Log in with credentials | Token saved in `localStorage`; User state updates. |
+| Cloud Upload | Upload an image | Image appears in the UI and Cloudinary Media Library. |
+| Admin Access | Access `/admin` | Only visible if the user role is manually updated to `admin`. |
 
-### User Routes (`/api/user`)
+### 2. Technical Verification
 
-| Method | Endpoint | Access | Description |
-|--------|----------|--------|-------------|
-| GET | `/api/user/profile` | Protected | Get user profile |
-| PUT | `/api/user/profile` | Protected | Update user profile |
-
-### Admin Routes (`/api/admin`)
-
-| Method | Endpoint | Access | Description |
-|--------|----------|--------|-------------|
-| GET | `/api/admin/users` | Admin only | Get all users |
-| DELETE | `/api/admin/users/:id` | Admin only | Delete a user |
-| PUT | `/api/admin/users/:id/role` | Admin only | Update user role |
+- **CORS Check** — Verify that the backend allows requests from the frontend domain via the `FRONTEND_URL` environment variable.
+- **Token Expiry** — Verify that the app redirects to `/login` if the JWT is missing or invalid (HTTP `401`).
+- **Multipart Boundary** — Ensure `api.js` does **not** manually set the `Content-Type` for uploads, allowing Axios to automatically set the boundary for Multer.
 
 
 ## Local Setup
 
-### 1. Clone the Repository
+### 1. Backend Configuration (`/backend`)
 
-```bash
-git clone https://github.com/numair-2003/authorization_and_authentication_user_management_system.git
-cd authorization_and_authentication_user_management_system
+Create a `.env` file:
+
+```env
+PORT=5000
+MONGO_URI=your_mongodb_uri
+JWT_SECRET=your_jwt_secret
+CLOUDINARY_CLOUD_NAME=your_name
+CLOUDINARY_API_KEY=your_key
+CLOUDINARY_API_SECRET=your_secret
+FRONTEND_URL=http://localhost:3000
 ```
 
-### 2. Start MongoDB Locally
-
-```bash
-# Windows
-"C:\Program Files\MongoDB\Server\8.2\bin\mongod.exe" --dbpath "D:\MongoDB\data\db"
-```
-
-### 3. Backend Setup
+Install dependencies and start the server:
 
 ```bash
 cd backend
 npm install
+npm start
 ```
 
-Create a `.env` file inside the `backend` folder:
+### 2. Frontend Configuration (`/frontend`)
 
-```
-PORT=5000
-MONGO_URI=mongodb://localhost:27017/mern_auth
-JWT_SECRET=supersecretkey123
-JWT_EXPIRES_IN=7d
-```
+Create a `.env` file:
 
-Run:
-```bash
-npm run dev
+```env
+REACT_APP_API_URL=http://localhost:5000
 ```
 
-You should see:
-```
-✅ Connected to MongoDB
-🚀 Server running at http://localhost:5000
-```
-
-### 4. Frontend Setup
+Install dependencies and start the app:
 
 ```bash
 cd frontend
@@ -192,60 +97,52 @@ npm install
 npm start
 ```
 
-React app opens at: **http://localhost:3000**
 
+## Deployment Guide (Vercel)
 
-## Creating an Admin User
+### Backend Deployment
 
-After signing up, promote a user to admin in two ways:
+- **Root Directory** — Set to `backend`.
+- **Framework Preset** — Select `Node.js`.
+- **CORS Tip** — Ensure `FRONTEND_URL` in Vercel settings matches your live frontend URL exactly.
 
-**Option 1 — MongoDB Compass:**
-1. Open MongoDB Compass
-2. Connect to `mongodb://localhost:27017`
-3. Go to `mern_auth` database -> `users` collection
-4. Find your user -> click Edit
-5. Change `role` from `"user"` to `"admin"`
-6. Click Update
-7. Logout and login again
+### Frontend Deployment
 
-**Option 2 — MongoDB Compass (Production/Cloud Atlas):**
-1. Log in to **MongoDB Atlas** and navigate to your Cluster
-2. Click **Connect** and select **Connect using MongoDB Compass**
-3. Copy the provided URI string
-4. Open **MongoDB Compass**, paste the URI, and replace `<password>` with your database user password
-5. Open the `mern_auth` -> `users` collection and update the user role to `"admin"`
-
-> **Note:** When setting your Database User password in MongoDB Cloud Atlas, avoid using special symbols (like `@`, `:`, `/`, or `#`). These characters have special meanings in URIs and can cause connection failures in MongoDB Compass or Railway App. Always use alphanumeric characters for the best results.
-
-**Option 3 — Admin Panel:**
-Login as an existing admin -> go to Admin Panel -> click `-> admin` next to any user.
-
-
-## Deployment Guide
-
-### Backend -> Railway
-
-1. Set the **Root Directory** to `/backend` in Railway settings
-2. Ensure the **Custom Build Command** is empty (to skip unnecessary `npm run build` checks)
-3. Add Environment Variables:
-   - `MONGO_URI`: `mongodb+srv://numair1919_db_user:IS6gghxC4MEVwsQg@cluster0.k0ber2d.mongodb.net/mern_auth?appName=Cluster0` (Ensure there are no whitespaces spaces in URI)
-   - `JWT_SECRET`: `supersecretkey123`
-   - `PORT`: `5000`
-
-### Frontend -> Vercel
-
-Add an environment variable in Vercel dashboard:
-- `REACT_APP_API_URL` -> `https://authorizationandauthenticationusermanagement-production.up.railway.app` (Ensure `https://` prefix is included)
+- **Root Directory** — Set to `frontend`.
+- **Environment Variable** — Set `REACT_APP_API_URL` to your live Vercel backend URL.
 
 
 ## Security Features
 
-- Passwords hashed with **bcrypt** (salt rounds: 10)
-- JWT tokens expire after **7 days**
-- Password field never returned in API responses (`select: false`)
-- Role escalation blocked on signup (users cannot self-assign admin)
-- Protected routes redirect unauthenticated users to `/login`
-- Admin routes return **403 Forbidden** error for non-admin users
-- JWT verified on every protected request via middleware
+| Feature | Implementation |
+|---------|---------------|
+| **Bcrypt Password Hashing** | 10 salt rounds used for secure storage. |
+| **RBAC** | Middleware restricts specific routes (like user deletion) to `admin` accounts only. |
+| **Cloudinary Folders** | Media is organized in a dedicated `mern_gallery` folder to prevent clutter. |
 
-*Built by **Numair Fahad** — MERN Stack Intern at DawoodTech NextGen*
+
+## Project Structure
+
+```
+cloudgallery/
+├── backend/
+│   ├── config/         # Cloudinary & DB config
+│   ├── middleware/      # Auth & RBAC middleware
+│   ├── models/          # Mongoose schemas
+│   ├── routes/          # Express API routes
+│   └── server.js
+├── frontend/
+│   ├── public/
+│   └── src/
+│       ├── components/  # Reusable UI components
+│       ├── context/     # Auth Context API
+│       ├── pages/       # Route-level pages
+│       └── api.js       # Axios instance with interceptors
+└── README.md
+```
+
+
+## Author
+
+**Numair Fahad**
+MERN Stack Intern @ **DawoodTech NextGen**
