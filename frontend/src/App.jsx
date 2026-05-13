@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
 import { 
   Upload, 
@@ -8,7 +8,8 @@ import {
   UserPlus, 
   LayoutDashboard, 
   LogOut, 
-  ShieldAlert 
+  ShieldAlert,
+  XCircle
 } from 'lucide-react';
 import { useAuth } from './context/AuthContext';
 import { fetchImagesAPI, uploadImageAPI } from './services/api';
@@ -49,7 +50,7 @@ const Navbar = () => {
   );
 };
 
-const GalleryView = ({ images, loading, uploading, onFileChange, handleUpload, fileInputRef }) => {
+const GalleryView = ({ images, loading, uploading, onFileChange, handleUpload, fileInputRef, preview, clearFile }) => {
   const { user } = useAuth();
 
   return (
@@ -71,14 +72,30 @@ const GalleryView = ({ images, loading, uploading, onFileChange, handleUpload, f
           <h3>{user ? 'Upload Content' : 'Guest Access'}</h3>
           {user ? (
             <form onSubmit={handleUpload}>
-              <input 
-                type="file" 
-                ref={fileInputRef}
-                onChange={onFileChange} 
-                accept="image/*" 
-                id="file-input" 
-              />
-              <button type="submit" disabled={uploading}>
+              <div className="file-input-container">
+                <input 
+                  type="file" 
+                  ref={fileInputRef}
+                  onChange={onFileChange} 
+                  accept="image/*" 
+                  id="file-input" 
+                  className="hidden-input"
+                />
+                <label htmlFor="file-input" className="file-label">
+                  {preview ? "Change Image" : "Choose File"}
+                </label>
+              </div>
+
+              {preview && (
+                <div className="preview-container">
+                  <img src={preview} alt="Preview" className="upload-preview" />
+                  <button type="button" onClick={clearFile} className="btn-clear">
+                    <XCircle size={16} /> Remove
+                  </button>
+                </div>
+              )}
+
+              <button type="submit" disabled={uploading || !preview} className="btn-upload">
                 {uploading ? <Loader2 className="spinner" /> : <Upload size={18} />}
                 {uploading ? " Processing..." : " Upload to Cloud"}
               </button>
@@ -100,7 +117,9 @@ const GalleryView = ({ images, loading, uploading, onFileChange, handleUpload, f
             <div className="image-grid">
               {Array.isArray(images) && images.length > 0 ? images.map((img) => (
                 <div key={img._id} className="card">
-                  <img src={img.url} alt="User Upload" loading="lazy" />
+                  <a href={img.url} target="_blank" rel="noopener noreferrer">
+                    <img src={img.url} alt="User Upload" loading="lazy" />
+                  </a>
                   <div className="card-info">
                     <span>{new Date(img.createdAt).toLocaleDateString()}</span>
                     <code>IMG_{img._id?.slice(-4) || "0000"}</code>
@@ -122,22 +141,17 @@ const GalleryView = ({ images, loading, uploading, onFileChange, handleUpload, f
 function App() {
   const [images, setImages] = useState([]);
   const [file, setFile] = useState(null);
+  const [preview, setPreview] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [loadingImages, setLoadingImages] = useState(true);
-  const fileInputRef = React.useRef(null);
+  const fileInputRef = useRef(null);
   const { user, loading: authLoading } = useAuth();
 
   const loadImages = async () => {
     try {
       const res = await fetchImagesAPI();
-      const data = res.data;
-      if (Array.isArray(data)) {
-        setImages(data);
-      } else if (data && Array.isArray(data.data)) {
-        setImages(data.data); 
-      } else {
-        setImages([]); 
-      }
+      const fetchedData = res.data?.data || res.data;
+      setImages(Array.isArray(fetchedData) ? fetchedData : []);
     } catch (error) {
       console.error("Gallery Sync Error:", error);
       setImages([]); 
@@ -149,6 +163,20 @@ function App() {
   useEffect(() => {
     loadImages();
   }, []);
+
+  const onFileChange = (e) => {
+    const selectedFile = e.target.files[0];
+    if (selectedFile) {
+      setFile(selectedFile);
+      setPreview(URL.createObjectURL(selectedFile));
+    }
+  };
+
+  const clearFile = () => {
+    setFile(null);
+    setPreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
   if (authLoading) {
     return (
@@ -171,8 +199,7 @@ function App() {
       const response = await uploadImageAPI(formData);
       
       if (response.status === 201 || response.status === 200) {
-        setFile(null);
-        if (fileInputRef.current) fileInputRef.current.value = ""; 
+        clearFile();
         await loadImages(); 
         alert("Media successfully pushed to Cloudinary!");
       }
@@ -195,9 +222,11 @@ function App() {
               images={images} 
               loading={loadingImages} 
               uploading={uploading} 
-              onFileChange={(e) => setFile(e.target.files[0])} 
+              onFileChange={onFileChange} 
               handleUpload={handleUpload} 
               fileInputRef={fileInputRef}
+              preview={preview}
+              clearFile={clearFile}
             />
           } />
           <Route path="/login" element={user ? <Navigate to="/" /> : <Login />} />

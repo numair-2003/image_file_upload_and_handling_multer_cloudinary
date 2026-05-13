@@ -7,7 +7,6 @@ console.log('Target BASE_URL:', BASE_URL);
 
 const api = axios.create({
   baseURL: BASE_URL,
-  headers: { 'Content-Type': 'application/json' },
 });
 
 api.interceptors.request.use((config) => {
@@ -55,6 +54,12 @@ export const updateUserRoleAPI = (id, role) => api.put(`/api/admin/users/${id}/r
 
 export const fetchImagesAPI = () => api.get('/api/images');
 
-export const uploadImageAPI = (formData) => api.post('/api/upload', formData);
+export const uploadImageAPI = (formData) => {
+  return api.post('/api/upload', formData, {
+    headers: {
+      'Content-Type': undefined 
+    }
+  });
+};
 
 export default api;
