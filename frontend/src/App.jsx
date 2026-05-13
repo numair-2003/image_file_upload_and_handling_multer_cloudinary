@@ -27,7 +27,6 @@ const Navbar = () => {
       </div>
       <div className="nav-links">
         <Link to="/"><ImageIcon size={18} /> Gallery</Link>
-        
         {user ? (
           <>
             {user.role === 'admin' && (
@@ -67,7 +66,6 @@ const GalleryView = ({ images, loading, uploading, onFileChange, handleUpload })
           <span className="pill">Cloudinary</span>
         </div>
       </header>
-
       <div className="grid">
         <aside className="upload-card">
           <h3>{user ? 'Upload Content' : 'Guest Access'}</h3>
@@ -90,7 +88,6 @@ const GalleryView = ({ images, loading, uploading, onFileChange, handleUpload })
             </div>
           )}
         </aside>
-
         <main className="gallery-section">
           <h2>Cloud Storage</h2>
           {loading ? (
@@ -126,7 +123,6 @@ function App() {
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [loadingImages, setLoadingImages] = useState(true);
-  
   const { user, loading: authLoading } = useAuth();
 
   const loadImages = async () => {
@@ -164,10 +160,8 @@ function App() {
   const handleUpload = async (e) => {
     e.preventDefault();
     if (!file) return alert("Please select an image file!");
-    
     const formData = new FormData();
     formData.append('image', file);
-    
     try {
       setUploading(true);
       await uploadImageAPI(formData);
@@ -195,10 +189,8 @@ function App() {
               handleUpload={handleUpload} 
             />
           } />
-          
           <Route path="/login" element={user ? <Navigate to="/" /> : <Login />} />
           <Route path="/signup" element={user ? <Navigate to="/" /> : <Signup />} />
-          
           <Route path="/admin" element={
             user?.role === 'admin' ? (
               <div className="container">
@@ -219,10 +211,8 @@ function App() {
               </div>
             )
           } />
-
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
-
         <footer className="app-footer">
           <code>&copy; 2026 CloudMedia Portfolio - Version 1.0.2</code>
         </footer>
