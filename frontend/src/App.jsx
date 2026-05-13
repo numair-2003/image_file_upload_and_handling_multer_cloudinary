@@ -12,8 +12,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from './context/AuthContext';
 import { fetchImagesAPI, uploadImageAPI } from './services/api';
-import Login from './components/Login';
-import Signup from './components/Signup';
+import Login from './pages/Login';
+import Signup from './pages/Signup';
 import './App.css';
 
 const Navbar = () => {
