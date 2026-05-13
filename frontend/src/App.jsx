@@ -36,7 +36,7 @@ const Navbar = () => {
               </Link>
             )}
             <button onClick={logout} className="nav-btn-logout">
-              <LogOut size={18} /> Logout ({user.name.split(' ')[0]})
+              <LogOut size={18} /> Logout ({user.name?.split(' ')[0] || "User"})
             </button>
           </>
         ) : (
@@ -100,12 +100,12 @@ const GalleryView = ({ images, loading, uploading, onFileChange, handleUpload })
             </div>
           ) : (
             <div className="image-grid">
-              {images.length > 0 ? images.map((img) => (
+              {Array.isArray(images) && images.length > 0 ? images.map((img) => (
                 <div key={img._id} className="card">
                   <img src={img.url} alt="User Upload" loading="lazy" />
                   <div className="card-info">
                     <span>{new Date(img.createdAt).toLocaleDateString()}</span>
-                    <code>IMG_{img._id.slice(-4)}</code>
+                    <code>IMG_{img._id?.slice(-4) || "0000"}</code>
                   </div>
                 </div>
               )) : (
@@ -131,10 +131,18 @@ function App() {
 
   const loadImages = async () => {
     try {
-      const { data } = await fetchImagesAPI();
-      setImages(data);
+      const res = await fetchImagesAPI();
+      const data = res.data;
+      if (Array.isArray(data)) {
+        setImages(data);
+      } else if (data && Array.isArray(data.data)) {
+        setImages(data.data); 
+      } else {
+        setImages([]); 
+      }
     } catch (error) {
       console.error("Gallery Sync Error:", error);
+      setImages([]); 
     } finally {
       setLoadingImages(false);
     }
@@ -167,7 +175,7 @@ function App() {
       loadImages(); 
       alert("Media successfully pushed to Cloudinary!");
     } catch (error) {
-      alert(error.response?.data?.message || "Image file upload rejected. Are you logged in?");
+      alert(error.response?.data?.message || "Upload rejected. Check login status!");
     } finally {
       setUploading(false);
     }
@@ -216,7 +224,7 @@ function App() {
         </Routes>
 
         <footer className="app-footer">
-          <code>&copy; 2024 CloudMedia Portfolio - Version 1.0.2</code>
+          <code>&copy; 2026 CloudMedia Portfolio - Version 1.0.2</code>
         </footer>
       </div>
     </Router>
