@@ -54,8 +54,7 @@ export const deleteUserAPI     = (id) => api.delete(`/api/admin/users/${id}`);
 export const updateUserRoleAPI = (id, role) => api.put(`/api/admin/users/${id}/role`, { role });
 
 export const fetchImagesAPI = () => api.get('/api/images');
-export const uploadImageAPI = (formData) => api.post('/api/upload', formData, {
-  headers: { 'Content-Type': 'multipart/form-data' } 
-});
+
+export const uploadImageAPI = (formData) => api.post('/api/upload', formData);
 
 export default api;
